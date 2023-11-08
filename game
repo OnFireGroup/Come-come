@@ -96,6 +96,93 @@ void resetFood() {
     foodY = (rand() % (BOARD_HEIGHT - 2)) + 1;
 }
 
+void moveCharacters() {
+    int dirX = 0, dirY = 0;
+    if (level == 1) {
+        // Nível fácil: fantasma move-se aleatoriamente
+        int randomDir = rand() % 4;
+        switch (randomDir) {
+            case 0:
+                dirX = -1;
+                break;
+            case 1:
+                dirX = 1;
+                break;
+            case 2:
+                dirY = -1;
+                break;
+            case 3:
+                dirY = 1;
+                break;
+        }
+    } else if (level == 2) {
+        // Nível médio: fantasma persegue o Pac-Man
+        calculateGhostDirection(&dirX, &dirY);
+    } else if (level == 3) {
+        // Nível difícil: fantasma persegue o Pac-Man com atraso
+        if (rand() % 3 != 0) {
+            calculateGhostDirection(&dirX, &dirY);
+        }
+    }
+
+    // Move o fantasma
+    int newGhostX = ghostX + dirX;
+    int newGhostY = ghostY + dirY;
+    if (board[newGhostY][newGhostX] != WALL) {
+        board[ghostY][ghostX] = ' ';
+        ghostX = newGhostX;
+        ghostY = newGhostY;
+    }
+
+    displayBoard();
+
+    if (_kbhit()) {
+        char move = _getch();
+        int newPacManX = pacManX;
+        int newPacManY = pacManY;
+
+        switch (move) {
+            case 'a':
+                newPacManX = pacManX - 1;
+                break;
+            case 'd':
+                newPacManX = pacManX + 1;
+                break;
+            case 'w':
+                newPacManY = pacManY - 1;
+                break;
+            case 's':
+                newPacManY = pacManY + 1;
+                break;
+            case 'x':
+                exit(0);
+        }
+
+        if (board[newPacManY][newPacManX] != WALL) {
+            board[pacManY][pacManX] = ' ';
+            pacManX = newPacManX;
+            pacManY = newPacManY;
+
+            // Verifique se o Pac-Man comeu a comida
+            if (newPacManX == foodX && newPacManY == foodY) {
+                resetFood();
+                pacManPower = 1; // Pac-Man tem o poder de comer o fantasma
+            }
+        }
+    }
+
+    // Lógica do poder do Pac-Man
+    if (pacManPower) {
+        if (pacManX == ghostX && pacManY == ghostY) {
+            printf("Você venceu!");
+            exit(0);
+        }
+    } else if (pacManX == ghostX && pacManY == ghostY) {
+        printf("Você perdeu!");
+        exit(0);
+    }
+}
+
 int main() {
     srand(time(NULL));
     showMenu();
@@ -106,82 +193,7 @@ int main() {
         board[pacManY][pacManX] = PACMAN;
         board[foodY][foodX] = FOOD;
 
-        int dirX = 0, dirY = 0;
-        if (level == 1) {
-            // Nível fácil: fantasma move-se aleatoriamente
-            int randomDir = rand() % 4;
-            switch (randomDir) {
-                case 0: dirX = -1; break;
-                case 1: dirX = 1; break;
-                case 2: dirY = -1; break;
-                case 3: dirY = 1; break;
-            }
-        } else if (level == 2) {
-            // Nível médio: fantasma persegue o Pac-Man
-            calculateGhostDirection(&dirX, &dirY);
-        } else if (level == 3) {
-            // Nível difícil: fantasma persegue o Pac-Man com atraso
-            if (rand() % 3 != 0) {
-                calculateGhostDirection(&dirX, &dirY);
-            }
-        }
-
-        // Move o fantasma
-        int newGhostX = ghostX + dirX;
-        int newGhostY = ghostY + dirY;
-        if (board[newGhostY][newGhostX] != WALL) {
-            board[ghostY][ghostX] = ' ';
-            ghostX = newGhostX;
-            ghostY = newGhostY;
-        }
-
-        displayBoard();
-
-        if (_kbhit()) {
-            char move = _getch();
-            int newPacManX = pacManX;
-            int newPacManY = pacManY
-
-            switch (move) {
-                case 'a':
-                    newPacManX = pacManX - 1;
-                    break;
-                case 'd':
-                    newPacManX = pacManX + 1;
-                    break;
-                case 'w':
-                    newPacManY = pacManY - 1;
-                    break;
-                case 's':
-                    newPacManY = pacManY + 1;
-                    break;
-                case 'x':
-                    exit(0);
-            }
-
-            if (board[newPacManY][newPacManX] != WALL) {
-                board[pacManY][pacManX] = ' ';
-                pacManX = newPacManX;
-                pacManY = newPacManY;
-
-                // Verifique se o Pac-Man comeu a comida
-                if (newPacManX == foodX && newPacManY == foodY) {
-                    resetFood();
-                    pacManPower = 1; // Pac-Man tem o poder de comer o fantasma
-                }
-            }
-        }
-
-        // Lógica do poder do Pac-Man
-        if (pacManPower) {
-            if (pacManX == ghostX && pacManY == ghostY) {
-                printf("Você venceu!");
-                break;
-            }
-        } else if (pacManX == ghostX && pacManY == ghostY) {
-            printf("Você perdeu!");
-            break;
-        }
+        moveCharacters();
     }
 
     return 0;
